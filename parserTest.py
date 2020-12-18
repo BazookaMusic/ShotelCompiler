@@ -6,55 +6,54 @@ class ParserTest(unittest.TestCase):
     def test_type_simple(self):
         parser = Parser([
         Token("TYPE"), Token('UID(Hello)'), Token("ASSIGN"), 
-            Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)"),
+            Token("UID(FETA)"), Token("UID(INT)"), Token("UID(INT)"),
         Token("COMMA"),
-            Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)"),
+            Token("UID(FETA)"), Token("UID(INT)"), Token("UID(INT)"),
         Token("COMMA"),
-            Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)"),
+            Token("UID(FETA)"), Token("UID(INT)"), Token("UID(INT)"),
 
         Token("TYPE"), Token('UID(Hello)'), Token("ASSIGN"), 
-            Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)"),
+            Token("UID(FETA)"), Token("UID(INT)"), Token("UID(INT)"),
         Token("COMMA"),
-            Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)"),
+            Token("UID(FETA)"), Token("UID(INT)"), Token("UID(INT)"),
         Token("COMMA"),
-            Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)")])
+            Token("UID(FETA)"), Token("UID(INT)"), Token("UID(INT)")])
         
-        expectedOutput = "[DefinitionType(Hello)[Constructor(FETA)['int', 'int'], Constructor(FETA)['int', 'int'], Constructor(FETA)['int', 'int']], DefinitionType(Hello)[Constructor(FETA)['int', 'int'], Constructor(FETA)['int', 'int'], Constructor(FETA)['int', 'int']]]"
+        expectedOutput = "[DefinitionType(Hello)[Constructor(FETA)['INT', 'INT'], Constructor(FETA)['INT', 'INT'], Constructor(FETA)['INT', 'INT']], DefinitionType(Hello)[Constructor(FETA)['INT', 'INT'], Constructor(FETA)['INT', 'INT'], Constructor(FETA)['INT', 'INT']]]"
 
         self.assertEqual(expectedOutput, str(parser.Program()))
     
     def test_type_constructor(self):
         source = [
             "TYPE", "UID(AFunc)", "ASSIGN", 
-                "UID(COMPOSITE)", "LID(int)", "LID(int)", 
+                "UID(COMPOSITE)", "UID(Int)", "UID(Int)", 
                 "COMMA", 
-                "UID(COMPOSITE2)", "LID(double)", "LID(double)"
+                "UID(COMPOSITE2)", "UID(Double)", "UID(Double)"
         ]
 
         tokens = ParserTest.to_tokens(source)
         parser = Parser(tokens)
         
-        expectedTree = "[DefinitionType(AFunc)[Constructor(COMPOSITE)['int', 'int'], Constructor(COMPOSITE2)['double', 'double']]]"
+        expectedTree = "[DefinitionType(AFunc)[Constructor(COMPOSITE)['Int', 'Int'], Constructor(COMPOSITE2)['Double', 'Double']]]"
         self.assertEqual(expectedTree, str(parser.Program()))
     
     def test_type_mixed(self):
         source = [
             "TYPE", "UID(AFunc)", "ASSIGN", 
-                "UID(COMPOSITE)", "LID(int)", "LID(int)", 
+                "UID(COMPOSITE)", "UID(Int)", "UID(Int)", 
                 "COMMA", 
-                "UID(COMPOSITE2)", "LID(double)", "LID(double)",
+                "UID(COMPOSITE2)", "UID(Double)", "UID(Double)",
                 "COMMA",
-                "UID(Another)"
-                "LID(int)",
-                "LID(int)",
+                "UID(Another)",
+                "UID(Int)",
+                "UID(Int)",
                 "COMMA",
                 "UID(EMPTY)"
         ]
 
         tokens = ParserTest.to_tokens(source)
         parser = Parser(tokens)
-        
-        expectedTree = "[DefinitionType(AFunc)[Constructor(COMPOSITE)['int', 'int'], Constructor(COMPOSITE2)['double', 'double'], Constructor(Another)LID(int)['int'], Constructor(EMPTY)[]]]"
+        expectedTree = "[DefinitionType(AFunc)[Constructor(COMPOSITE)['Int', 'Int'], Constructor(COMPOSITE2)['Double', 'Double'], Constructor(Another)['Int', 'Int'], Constructor(EMPTY)[]]]"
         self.assertEqual(expectedTree, str(parser.Program()))
         
     
@@ -159,4 +158,4 @@ class ParserTest(unittest.TestCase):
     
 
 if __name__ == "__main__":
-    ParserTest().test_complex_1()
+    unittest.main()

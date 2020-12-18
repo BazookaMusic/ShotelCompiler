@@ -16,7 +16,7 @@ param :=
 fn_header := fn NAME params
 
 fn :=
-  | fn_header { Aadd }
+  | fn_header Lets { Aadd }
 
 params := 
     | params param

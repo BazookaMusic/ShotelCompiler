@@ -208,17 +208,17 @@ class Parser:
 
         self.AssertExistence(TokenType.ASSIGN)
 
-        constructors: ['Constructor'] = self.Constructors()
+        constructors: ['Constructor'] = self.Constructors(upperCaseParams=True)
 
         return TypeDefinition(name.value, constructors)
     
-    def Constructors(self):
+    def Constructors(self, upperCaseParams = False):
         self.EOFCheck("Expected list of constructors and got none instead.")
 
         constructors: ['Constructor'] = []
 
         while True:
-            constructor = self.Constructor()
+            constructor = self.Constructor(upperCaseParams)
 
             constructors.append(constructor)
 
@@ -237,7 +237,7 @@ class Parser:
 
         return constructors
     
-    def Constructor(self):
+    def Constructor(self, upperCaseParams = False):
         self.EOFCheck("Expected constructor but got EOF instead.")
 
         name = self.GetToken()
@@ -246,7 +246,7 @@ class Parser:
             raise InvalidTokenError(f"Invalid constructor definition {name.value}." + 
         "Constructor names should start with a capital letter." if name.type == TokenType.LID else f"Expected constructor name but got {name.type} instead.")
         
-        return Constructor(name.value, self.Params())
+        return Constructor(name.value, self.Params(upperCaseParams))
     
     # FN
 
@@ -473,30 +473,34 @@ class Parser:
             varname = self.GetToken().value
             return PatternVar(varname)
         else:
-            constructor = self.Constructor()
+            constructor = self.Constructor(upperCaseParams=False)
             return PatternConstructor(constructor.name, constructor.types)
     
     # Get lowercase params
     
-    def Params(self):
+    def Params(self, upperCaseParams = False):
         params: [str] = []
         
-        next_exists = len(self.stack) != 0 and self.Peek().type == TokenType.LID
+        case = TokenType.UID if upperCaseParams else TokenType.LID
+        next_exists = len(self.stack) != 0 and self.Peek().type == case
         while next_exists:
-            param = self.Param()
+            param = self.Param(upperCaseParams)
             params.append(param)
 
-            next_exists = len(self.stack) != 0 and self.Peek().type == TokenType.LID
+            next_exists = len(self.stack) != 0 and self.Peek().type == case
         
         return params
 
-    def Param(self):
+    def Param(self, upperCase = False):
         self.EOFCheck("Expected constructor lowercase parameter but got EOF instead.")
 
         param = self.GetToken()
 
-        if param.type != TokenType.LID:
-            raise InvalidTokenError(f"Expected lowercase constructor param but got {param.type} instead.")
+        typeOfToken = TokenType.UID if upperCase else TokenType.LID 
+
+        if param.type != typeOfToken:
+            case = "lowercase" if not upperCase else "uppercase"
+            raise InvalidTokenError(f"Expected {case} constructor param but got {param.type} instead.")
 
         return param.value
     
@@ -533,32 +537,6 @@ class Parser:
             return result + " " +Parser.TreeToString(body.op)
         else:
             return result
-
-
-if __name__ == "__main__":
-    parser = Parser([
-    Token("TYPE"), Token('UID(Hello)'), Token("ASSIGN"), 
-        Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)"),
-    Token("COMMA"),
-        Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)"),
-    Token("COMMA"),
-        Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)"),
-
-    Token("TYPE"), Token('UID(Hello)'), Token("ASSIGN"), 
-        Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)"),
-    Token("COMMA"),
-        Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)"),
-    Token("COMMA"),
-        Token("UID(FETA)"), Token("LID(int)"), Token("LID(int)")])
-
-    print(parser.Program())
-
-    parser = Parser([
-    Token("FN"), Token('UID(Hello)'), Token("LID(a)"), Token("LID(b)"), 
-        Token("OCURLY"), Token("INT(5)"), Token("PLUS"), Token("INT(4)"), Token("PLUS"), Token("INT(5)"), Token("CCURLY")])
-
-    print(Parser.TreeToString(parser.program()[0].body))
-    
 
 
 
