@@ -422,20 +422,17 @@ class Parser:
         elif nextToken.type == TokenType.CASE:
             return self.Case()
         elif nextToken.type == TokenType.OPAR:
-            self.GetToken()
-
             expression = self.Comparison()
 
             self.AssertExistence(TokenType.CPAR)
         else:
-            raise InvalidTokenError(f"Expection a function or a value but got {self.Peek()} instead.")
+            raise InvalidTokenError(f"Expectied a function or a value but got {self.Peek()} instead.")
 
     def Case(self):
         self.EOFCheck("Expected Case statement but got EOF instead.")
 
         expression = self.Comparison()
 
-        self.AssertExistence(TokenType.OF)
         branches = self.Branches()
         return CaseOf(expression, branches)
     
@@ -444,20 +441,20 @@ class Parser:
 
         branches: ['Branch'] = []
 
-        nextExists = true
+        nextExists = True
 
         while nextExists:
             branches.append(self.Branch())
             nextExists = self.BranchExists()
     
     def BranchExists(self):
-        return len(self.stack) > 0 and self.stack[0].type == TokenType.Pattern
+        return len(self.stack) > 0 and self.stack[0].type == TokenType.PATTERN
     
     def Branch(self):
         self.EOFCheck("Expected branch but got EOF instead.")
 
         # remove pattern dash
-        self.AssertExistence(TokenType.Pattern)
+        self.AssertExistence(TokenType.PATTERN)
 
         pattern = self.Pattern()
 
@@ -477,7 +474,7 @@ class Parser:
             return PatternVar(varname)
         else:
             constructor = self.Constructor()
-            return PatternConstructor(constructor.name, constructor.params)
+            return PatternConstructor(constructor.name, constructor.types)
     
     # Get lowercase params
     

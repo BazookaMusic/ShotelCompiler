@@ -130,6 +130,23 @@ class ParserTest(unittest.TestCase):
 
         expected = "BinaryOp(OperationKind.TIMES) String(a) BinaryOp(OperationKind.TIMES) BinaryOp(OperationKind.OR) INT(13) INT(14) BinaryOp(OperationKind.OR) INT(15) INT(15)"
         self.assertEqual(expected, Parser.TreeToString(program[0].body))
+    
+    def test_complex_1(self):
+        source = [
+            "FN", "UID(TEST)", "LID(a)", "LID(b)",
+            "OCURLY",
+                "INT(15)", "PLUS", "INT(16)", "TIMES", "INT(23)" , "OR", "INT(17)", "AND", "INT(25)" , "XOR", "INT(35)", "EQUAL", "INT(17)", "NEQUAL", "INT(21)", 
+                "PLUS", 
+                "CASE", "OPAR", "INT(15)", "PLUS", "INT(32)", "CPAR",
+                "PATTERN", "LID(a)", "ARROW", "OCURLY", "INT(3)", "PLUS", "INT(4)", "CCURLY",
+                "PATTERN", "UID(TEST)", "LID(a)", "LID(b)", "ARROW", "OCURLY", "INT(3)", "PLUS", "INT(4)", "CCURLY",
+                "PATTERN", "LID(b)", "ARROW", "OCURLY", "INT(4)", "MODULO", "INT(5)", "CCURLY",
+                "PATTERN", "LID(c)", "ARROW", "OCURLY", "INT(4)", "RSHIFT", "INT(5)", "CCURLY",
+                "PATTERN", "LID(c)", "ARROW", "OCURLY", "OPAR","INT(4)", "RSHIFT", "INT(5)","CPAR", "PLUS", "INT(5)", "CCURLY",
+            "CCURLY"
+        ]
+
+        program = ParserTest.get_program(source)
 
     
     def to_tokens(tokens):
@@ -142,4 +159,4 @@ class ParserTest(unittest.TestCase):
     
 
 if __name__ == "__main__":
-    unittest.main()
+    ParserTest().test_complex_1()
