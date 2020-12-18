@@ -16,11 +16,19 @@ param :=
 fn_header := fn NAME params
 
 fn :=
-  | fn_header Lets { Aadd }
+  | fn_header { Aadd }
 
 params := 
     | params param
     | EMPTY
+
+lowercaseParams :=
+ | LID lowercaseParams
+ | LID
+
+ uppercaseParams :=
+ | UID uppercaseParams
+ | UID
 
 
 // TYPE
@@ -92,6 +100,6 @@ branch
 
 pattern
 | LID
-| fn_header
+| UID lowercaseParams
 
 
