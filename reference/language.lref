@@ -1,0 +1,48 @@
+%option noyywrap
+
+%{
+#include <iostream>
+#include "parser.hpp"
+#include "ast.hpp"
+
+extern std::vector<AstPtr> nodes;
+
+#define YY_DECL yy::parser::symbol_type yylex()
+%}
+
+%%
+[ \n]+ {}
+\+ { std::cout << "PLUS" << std::endl; }
+- { std::cout << "MINUS" << std::endl; }
+\/ { std::cout << "DIV" << std::endl;}
+\* { std::cout << "MUL" << std::endl;}
+\% {return yy::parser::make_MODULO();}
+\<\< {return yy::parser::make_LSHIFT();}
+\>\> {return yy::parser::make_RSHIFT();}
+and {return yy::parser::make_AND();}
+or {return yy::parser::make_OR();}
+xor {return yy::parser::make_XOR();}
+\! {return yy::parser::make_NOT();}
+[0-9]+ { return yy::parser::make_INT(atoi(yytext)); }
+fn { return yy::parser::make_FN();}
+type { return yy::parser::make_TYPE();}
+case { return yy::parser::make_CASE();}
+of { return yy::parser::make_OF();}
+\{ { return yy::parser::make_OCURLY();}
+\} { return yy::parser::make_CCURLY();}
+\( { return yy::parser::make_OPAR();}
+\) { return yy::parser::make_CPAR();}
+,  { return yy::parser::make_COMMA();}
+=> { return yy::parser::make_ARROW();}
+= { return yy::parser::make_ASSIGN();}
+== { return yy::parser::make_EQUAL();}
+!= { return yy::parser::make_NEQUAL();}
+[a-z][a-zA-Z]* { return yy::parser::make_LID(yytext); }
+[A-Z][a-zA-Z]* { return yy::parser::make_UID(yytext); }
+\"(([^\"]|\\\")*[^\\])?\" { return yy::parser::make_LITERAL(yytext);}
+
+%%
+
+int main() {
+    yylex();
+}

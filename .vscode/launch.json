@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "compile-test",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["./sources/source.sd "],
+            "console": "integratedTerminal"
+        }
+    ]
+}

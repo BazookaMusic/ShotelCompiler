@@ -1,0 +1,9 @@
+type Cheese = FETA int int int,EDAM int int int, Gouda int bool
+
+fn A a b c 
+{
+    case 15 + 3
+    | 11
+    | 12
+    | 14
+}
