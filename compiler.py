@@ -5,6 +5,26 @@ import sys
 import os
 import subprocess
 
+class Compiler:
+    def __init__(self):
+        pass
+
+    def compile_from_text(text):
+        # tokens
+        p = subprocess.run(['./scanner'], stdout=subprocess.PIPE,
+        input=text, encoding='ascii')
+        lines = p.stdout
+
+        #python tokens
+        tokenizer = TokenConverter(lines.splitlines())
+        tokens = tokenizer.tokens
+
+        #parser
+        parser = Parser(tokens)
+
+        return parser.Program()
+
+
 if __name__ == "__main__":
     sourceFile = sys.argv[1]
 
@@ -21,5 +41,4 @@ if __name__ == "__main__":
     parser = Parser(tokens)
 
     program = parser.Program()
-    
 

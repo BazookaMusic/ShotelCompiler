@@ -4,154 +4,10 @@ from enum import Enum
 from tokenizer import Token, TokenType
 import parser_helper
 from queue import Queue
-
-class AST:
-    pass
-
-class IntNode(AST):
-    def __init__(self, value: int):
-        self.value: int = value
-        self.isLeaf = True
-    
-    def __repr__(self):
-        return f'INT({self.value})'
-
-class StringNode(AST):
-    def __init__(self, value: str):
-        self.value: str = value
-        self.isLeaf = True
-    
-    def __repr__(self):
-        return f'String({self.value})'
-
-class LID(AST):
-    def __init__(self, value: str):
-        self.value: str = value
-        self.isLeaf = True
-    
-    def __repr__(self):
-        return f'String({self.value})'
-
-
-class UID(AST):
-    def __init__(self, value: str):
-        self.value: str = value
-        self.isLeaf = True
-
-    def __repr__(self):
-        return f'String({self.value})'
-
-class BinaryOperation(AST):
-
-    BinaryOperationKind = Enum("OperationKind", 
-    [
-        "PLUS",
-        "MINUS",
-        "TIMES",
-        "DIVIDE",
-        "MODULO",
-        "RSHIFT",
-        "LSHIFT",
-        "AND",
-        "OR",
-        "XOR",
-        "EQUALS",
-        "NEQUALS"
-    ])
-
-    def __init__(self, typeOf: Enum, left: 'AST', right: 'AST'):
-        self.left: 'AST' = left
-        self.right: 'AST' = right
-        self.kind: 'Enum' = typeOf
-    
-    def __repr__(self):
-        return f"BinaryOp({self.kind})"
-
-class UnaryOperation(AST):
-
-    UnaryOperationKind = Enum("UnaryOp",["NOT"])
-
-    def __init__(self, typeOf: 'Enum', op: 'AST'):
-        self.typeOf: 'Enum' = typeOf
-        self.op: 'AST' = op
-    
-    def __repr__(self):
-        return f"UnaryOp({self.typeOf}"
-
-class FunctionApplication(AST):
-    def __init__(self, left: 'AST', right: 'AST'):
-        self.left: 'AST' = left
-        self.right: 'AST' = right
-    
-    def __repr__(self):
-        return f"Fn"
-
-class Pattern:
-    pass
-
-class PatternConstructor(Pattern):
-    def __init__(self, name: str, params: [str]):
-        self.name: str = name
-        self.params: [str] = params
-    
-    def __repr__(self):
-        return f"PatternConstructor({self.name}){self.params}"
-
-class PatternVar(Pattern):
-    def __init__(self, name: str):
-        self.name: str = name
-    
-    def __repr__(self):
-        return f"PatternVar({self.name})"
-
-class Branch:
-    def __init__(self, pattern: 'Pattern', expresion: 'AST'):
-        self.pattern: 'Pattern' = pattern
-        self.expression: 'AST' = expresion
-    
-    def __repr__(self):
-        return "Branch"
-
-class CaseOf(AST):
-    def __init__(self, Of: 'AST', branches: ['AST']):
-        self.Of = Of
-        self.branches = branches
-    
-    def __repr__(self):
-        return "CaseOf"
-
-class Constructor:
-    def __init__(self, name: str, types: [str]):
-        self.name: str = name
-        self.types: [str] = types
-    
-    def __repr__(self):
-        return f"Constructor({self.name}){self.types}"
-
-class Definition:
-    pass
-
-class FnDefinition(Definition):
-    def __init__(self, name: str, params: [str], body: 'AST'):
-        self.name: str = name
-        self.params: [str] = params
-        self.body: 'AST' = body
-    
-    def __repr__(self):
-        return f"DefinitionFn({self.name}){self.params}"
-
-class TypeDefinition(Definition):
-    def __init__(self, name: str, constructors: ['Constructor']):
-        self.name: str = name
-        self.constructors = constructors
-    
-    def __repr__(self):
-        return f"DefinitionType({self.name}){self.constructors}"
-
+from ast import *
 
 class InvalidEOFError(Exception):
     pass
-
 
 class InvalidTokenError(Exception):
     pass
@@ -266,7 +122,7 @@ class Parser:
 
         self.AssertExistence(TokenType.CCURLY)
 
-        return FnDefinition(name, params, body)
+        return FnDefinition(name.value, params, body)
 
     
     def Expression(self):
