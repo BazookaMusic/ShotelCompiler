@@ -9,9 +9,8 @@ class IntNode(AST):
         self.value: int = value
         self.isLeaf = True
     
-    def typecheck(self, typeManager, environment):
-        return BaseType("Int")
-
+    def typecheck(self, typeManager, env):
+        return IntNode.Type
     def __repr__(self):
         return f'INT({self.value})'
     
@@ -22,8 +21,8 @@ class StringNode(AST):
         self.value: str = value
         self.isLeaf = True
     
-    def typecheck(self, typeManager, environment):
-        return BaseType("String")
+    def typecheck(self, typeManager, env):
+        return StringNode.Type
 
     def __repr__(self):
         return f'String({self.value})'
@@ -35,8 +34,8 @@ class LID(AST):
         self.value: str = value
         self.isLeaf = True
     
-    def typecheck(self, typeManager, environment):
-        return env.lookup(value)
+    def typecheck(self, typeManager, env):
+        return env.lookup(self.value)
 
     def __repr__(self):
         return f'LID({self.value})'
@@ -46,8 +45,8 @@ class UID(AST):
         self.value: str = value
         self.isLeaf = True
     
-    def typecheck(self, typeManager, environment):
-        return env.lookup(value)
+    def typecheck(self, typeManager, env):
+        return env.lookup(self.value)
 
     def __repr__(self):
         return f'UID({self.value})'
@@ -69,10 +68,10 @@ class BinaryOperation(AST):
         "NEQUALS"
     ])
 
-    def __init__(self, typeOf: Enum, left: 'AST', right: 'AST'):
+    def __init__(self, kind: Enum, left: 'AST', right: 'AST'):
         self.left: 'AST' = left
         self.right: 'AST' = right
-        self.kind: 'Enum' = typeOf
+        self.kind: 'Enum' = kind
     
     def typecheck(self, typeManager: 'TypeManager', env):
         # operator type is of the form a => b => c
@@ -93,14 +92,14 @@ class BinaryOperation(AST):
         returnType = typeManager.new_type()
 
         # b => c
-        b_to_c = ArrowType(rightType, functionType)
+        b_to_c = ArrowType(rightType, returnType)
 
         # a => (b => c)
         a_to_b_to_c = ArrowType(leftType, b_to_c)
         
         typeManager.unify(a_to_b_to_c, functionType)
 
-        return functionType
+        return returnType
 
     def __repr__(self):
         return f"BinaryOp({self.kind})"
@@ -109,23 +108,23 @@ class UnaryOperation(AST):
 
     UnaryOperationKind = Enum("UnaryOp",["NOT"])
 
-    def __init__(self, typeOf: 'Enum', op: 'AST'):
-        self.typeOf: 'Enum' = typeOf
+    def __init__(self, kind: 'Enum', op: 'AST'):
+        self.kind: 'Enum' = kind
         self.op: 'AST' = op
 
     def __repr__(self):
-        return f"UnaryOp({self.typeOf}"
+        return f"UnaryOp({self.kind}"
     
     def typecheck(self, typeManager: 'TypeManager', env: 'Environment'):
         valueType: 'Type' = self.op.typecheck(typeManager, env)
-        functionType: 'Type' = env.lookup(str(self.typeof))
+        functionType: 'Type' = env.lookup(str(self.kind))
 
         returnType: 'ArrowType' = typeManager.new_type()
         arrow = ArrowType(valueType, returnType)
 
         typeManager.unify(arrow, functionType)
 
-        return functionType
+        return returnType
 
 
 class FunctionApplication(AST):
@@ -139,6 +138,8 @@ class FunctionApplication(AST):
     def typecheck(self, typeManager: 'TypeManager', env: 'Environment'):
         # application has type (a => b) => a => b
 
+        # (a => b => c) a
+
         left = self.left.typecheck(typeManager, env)
         right = self.right.typecheck(typeManager, env)
 
@@ -147,7 +148,7 @@ class FunctionApplication(AST):
 
         typeManager.unify(arrow, left)
 
-        return ArrowType(left, right)
+        return returnType
 
 class Pattern:
     pass
@@ -247,7 +248,9 @@ class Constructor:
         return f"Constructor({self.name}){self.types}"
 
 class Definition:
-    pass
+    def typecheck(self, typeManager: 'TypeManager', env:'Environment'):
+        self.typecheck_first_pass(typeManager, env)
+        self.typecheck_second_pass(typeManager, env)
 
 class FnDefinition(Definition):
     def __init__(self, name: str, params: [str], body: 'AST'):
@@ -270,15 +273,13 @@ class FnDefinition(Definition):
         for param in self.params:
             new_type = typeManager.new_type()
             self.param_types.append(new_type)
-        
-        self.param_types.reverse()
 
-        for param_type in self.param_types:
+        length = len(self.param_types)
+        for i in range(length):
+            param_type = self.param_types[length - i - 1]
             full_type = ArrowType(param_type, full_type)
         
-        self.return_type = full_type
-        
-        env.bind(self.name, self.return_type)
+        env.bind(self.name, full_type)
     
     def typecheck_second_pass(self, typeManager, env):
         new_env = env.new_scope()
@@ -287,7 +288,7 @@ class FnDefinition(Definition):
         for i in range(len(self.param_types)):
             new_env.bind(self.params[i], self.param_types[last_param - i])
         
-        body_type = typeManager.new_type()
+        body_type = self.body.typecheck(typeManager, new_env)
         typeManager.unify(body_type, self.return_type)
 
     def __repr__(self):
@@ -301,14 +302,35 @@ class TypeDefinition(Definition):
     def __repr__(self):
         return f"DefinitionType({self.name}){self.constructors}"
     
-    def typecheck_first(self, typeManager: 'TypeManager', env: 'Environment'):
-        self.return_type = typeManager.new_type()
+    def typecheck_first_pass(self, typeManager: 'TypeManager', env: 'Environment'):
+        return_type = BaseType(self.name)
 
-        for constructor_index in range(len(self.constructors),-1, -1):
-            new_type = typeManager.new_type()
-            self.param_types.append(new_type)
+        for constructor in self.constructors:
+            full_type = return_type
+            
+            for param in constructor.types:
+                param_type = typeManager.new_type()
+                full_type = ArrowType(param_type, full_type)
+            
+            env.bind(constructor.name, full_type)
+    
+    def typecheck_second_pass(self, typeManager: 'TypeManager', env: 'Environment'):
+        pass
 
-            env.bind(self.constructors[constructor_index].name, )
+class Program:
+    def __init__(self, definitions):
+        self.definitions: ['Definition'] = definitions
+    
+    def typecheck(self, typeManager, env):
+        for definition in self.definitions:
+            definition.typecheck_first_pass(typeManager, env)
+        
+        for definition in self.definitions:
+            definition.typecheck_second_pass(typeManager, env)
+    
+    def __getitem__(self, index):
+        return self.definitions[index]
+
 
 
         

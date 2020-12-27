@@ -4,12 +4,15 @@ from enum import Enum
 from tokenizer import Token, TokenType
 import parser_helper
 from queue import Queue
-from ast import *
+from shotel_ast import *
 
 class InvalidEOFError(Exception):
     pass
 
 class InvalidTokenError(Exception):
+    pass
+
+class TokensNotExhaustedError(Exception):
     pass
 
 class Parser:
@@ -28,8 +31,12 @@ class Parser:
         return token
     
     def Program(self):
-        self.definitions: ['Definition'] = self.Definitions()
-        return self.definitions
+        self.Program = Program(self.Definitions())
+
+        if len(self.stack) > 0:
+            raise TokensNotExhaustedError(f"Parsing completed but EOF not reached. Remaining tokens:{list(self.stack)}")
+        
+        return self.Program
     
     def Definitions(self):
         definitions = []
@@ -240,18 +247,34 @@ class Parser:
 
         if self.Peek().type == TokenType.NOT:
             self.GetToken()
-            return UnaryOperation(UnaryOperation.UnaryOperationKind.NOT, self.ApplicationBase())
+            return UnaryOperation(UnaryOperation.UnaryOperationKind.NOT, self.Application())
         
-        return self.ApplicationBase()
+        return self.Application()
     
     
     def Application(self):
         self.EOFCheck("Expected expression but got EOF instead.")
-        
+
+        applications = None
+
+        # the tree of applications is built in reverse,
+        # because we want right to left application
+        # but parsing is done left to right
+
+        # get first application
+        application = self.ApplicationBase()
+
+        # check if there's a second application, maybe we don't need to allocate a node
         if self.ApplicationExists():
-            return FunctionApplication(self.ApplicationBase(),  self.Application())
+            current_application_node = FunctionApplication(application, self.ApplicationBase())
+        else:
+            return application
+
+        # for the rest, build the tree in reverse, return the root
+        while self.ApplicationExists():
+            current_application_node = FunctionApplication(current_application_node, self.ApplicationBase())
         
-        return self.ApplicationBase()
+        return current_application_node
 
     def ApplicationExists(self):
         if len(self.stack) == 0:
@@ -259,7 +282,7 @@ class Parser:
         
         nextTokenType = self.stack[0].type
 
-        return nextTokenType in [TokenType.NOT, TokenType.INT, TokenType.LID, TokenType.UID, TokenType.LITERAL,
+        return nextTokenType in [TokenType.INT, TokenType.LID, TokenType.UID, TokenType.LITERAL,
         TokenType.OPAR, TokenType.CASE]
 
     def ApplicationBase(self):

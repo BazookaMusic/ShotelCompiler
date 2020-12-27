@@ -107,6 +107,9 @@ class TypeManager:
             someType = binding
         
         return someType, False
+    
+    def getResolvedType(self, someType):
+        return self.resolve(someType)[0]
 
 class Environment:
     '''
@@ -127,7 +130,7 @@ class Environment:
             return maybeType
         
         if self.parent is not None:
-            return self.parent.lookup(item)
+            return self.parent.lookup(name)
         
         return None
     
