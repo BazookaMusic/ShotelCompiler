@@ -7,6 +7,9 @@ class UndefinedTypeError(Exception):
 class Type:
     pass
 
+class VariableUndefinedError(Exception):
+    pass
+
 class VariableType(Type):
     def __init__(self, name):
         self.name: str = name
@@ -14,6 +17,9 @@ class VariableType(Type):
 class BaseType(Type):
     def __init__(self, name):
         self.name: str = name
+    
+    def __repr__(self):
+        return f"BaseType.{self.name}"
 
 BaseTypes = [BaseType("Int"), BaseType("String")]
 

@@ -1,5 +1,5 @@
 from enum import Enum
-from typechecker import BaseType, ArrowType, TypeBindingError
+from typechecker import BaseType, ArrowType, TypeBindingError, UndefinedTypeError, VariableUndefinedError
 
 class AST:
     pass
@@ -35,7 +35,13 @@ class LID(AST):
         self.isLeaf = True
     
     def typecheck(self, typeManager, env):
-        return env.lookup(self.value)
+        res = env.lookup(self.value)
+
+        if res is None:
+            raise VariableUndefinedError(f"Variable '{self.value}' is undefined. Its type cannot be determined.")
+
+        return res
+
 
     def __repr__(self):
         return f'LID({self.value})'
@@ -46,7 +52,12 @@ class UID(AST):
         self.isLeaf = True
     
     def typecheck(self, typeManager, env):
-        return env.lookup(self.value)
+        res = env.lookup(self.value)
+
+        if res is None:
+            raise VariableUndefinedError(f"Variable '{self.value}' is undefined,so it's type cannot be determined.")
+        
+        return res
 
     def __repr__(self):
         return f'UID({self.value})'
@@ -226,7 +237,7 @@ class CaseOf(AST):
 
         for branch in self.branches:
             # each branch is in a new scope, they don't share variables
-            new_env = Environment.new_scope()
+            new_env = env.new_scope()
 
             # pattern should be same type as Of
             branch.pattern.match(of_type, typeManager, new_env)
@@ -234,6 +245,8 @@ class CaseOf(AST):
             # all branches should return the same type, equal with the new type we created
             curr_branch_type = branch.expression.typecheck(typeManager, new_env)
             typeManager.unify(branch_type, curr_branch_type)
+        
+        return branch_type
 
 
     def __repr__(self):
@@ -286,7 +299,7 @@ class FnDefinition(Definition):
 
         last_param = len(self.params) - 1
         for i in range(len(self.param_types)):
-            new_env.bind(self.params[i], self.param_types[last_param - i])
+            new_env.bind(self.params[i], self.param_types[i])
         
         body_type = self.body.typecheck(typeManager, new_env)
         typeManager.unify(body_type, self.return_type)

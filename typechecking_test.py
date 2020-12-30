@@ -366,7 +366,77 @@ def test_function_application_typechecking():
 
     assert typeManager.getResolvedType(test_fn.return_type).name == "Int"
 
+def test_pattern_match_typechecking():
+    program = ev('''
+    type Tuple = Pair X Y, Triple X Y Z, Quadruple X Y Z W
+
+    fn Add a b
+    {
+        a + b
+    }
+
+    fn Test a b
+    {
+        case a 
+        | Pair x y => { Add (x + b) (y + b)}
+        | Triple x y z => {Add (Add x y) z }
+        | Quadruple x y z w => {x + y + z + w}
+    }
+    ''')
+
+    env = env_setup()
+    typeManager = TypeManager()
+
+    program.typecheck(typeManager, env)
+
+    test_fn = program[1]
+    body = test_fn.body
+
+    for param_type in test_fn.param_types:
+        assert typeManager.getResolvedType(param_type).name == 'Int'
     
+    assert typeManager.getResolvedType(test_fn.return_type).name == 'Int'
+
+def test_pattern_match_variable_typechecking():
+    program = ev('''
+
+    type Number = Integer X, Decimal X Y
+
+    fn Add a b
+    {
+        a + b
+    }
+
+    fn DoRest num
+    {
+        case num
+        |  Decimal x y => {x + y}
+    }
+
+    fn Test a b c d
+    {
+        case a 
+        | Integer x => { x + b + c + d}
+        | rest => {DoRest rest}
+    }
+    ''')
+
+    env = env_setup()
+    typeManager = TypeManager()
+
+    program.typecheck(typeManager, env)
+
+    test_fn = program[3]
+    body = test_fn.body
+
+    first_type = typeManager.getResolvedType(test_fn.param_types[0])
+    assert first_type.name == 'Number'
+
+    for param_type in test_fn.param_types[1:]:
+        resolved_type = typeManager.getResolvedType(param_type)
+        assert resolved_type.name == 'Int'
+    
+    assert typeManager.getResolvedType(test_fn.return_type).name == 'Int'
 
 def VerifyArrow(arrow_type: ArrowType, n_params: int, final_type_name: str):
     temp = arrow_type
@@ -388,5 +458,5 @@ if __name__ == "__main__":
     #test_typemgr_unify_right_placeholder()
     #test_fn_typecheck_second_pass_no_args()
     #test_fn_typecheck_second_pass()
-    test_function_application_typechecking()
+    test_pattern_match_variable_typechecking()
 

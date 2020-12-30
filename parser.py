@@ -304,6 +304,8 @@ class Parser:
             expression = self.Comparison()
 
             self.AssertExistence(TokenType.CPAR)
+
+            return expression
         else:
             raise InvalidTokenError(f"Expectied a function or a value but got {self.Peek()} instead.")
 
@@ -325,6 +327,8 @@ class Parser:
         while nextExists:
             branches.append(self.Branch())
             nextExists = self.BranchExists()
+        
+        return branches
     
     def BranchExists(self):
         return len(self.stack) > 0 and self.stack[0].type == TokenType.PATTERN
@@ -344,6 +348,8 @@ class Parser:
         expression = self.Comparison()
 
         self.AssertExistence(TokenType.CCURLY)
+
+        return Branch(pattern, expression)
 
     def Pattern(self):
         self.EOFCheck("Expected pattern variable or constructor but got EOF instead.")
